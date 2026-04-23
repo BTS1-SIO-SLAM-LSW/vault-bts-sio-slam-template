@@ -1,152 +1,154 @@
-# Vault BTS SIO SLAM Template
 
-Template GitHub Classroom / repository modèle pour mettre en application la gestion des accès privilégiés (PAM) côté **développement applicatif** avec **HashiCorp Vault Community**.
+# TP Vault avec GitHub Codespaces – Guide élève (Version détaillée)
 
-Ce dépôt est conçu pour des étudiants de **BTS SIO option SLAM**. Il transpose en pratique les points clés du cours :
-- ne jamais stocker un secret en dur dans le code ;
-- centraliser les secrets dans un coffre ;
-- appliquer le principe du moindre privilège via des policies ;
-- utiliser des tokens à durée de vie limitée ;
-- intégrer la lecture de secrets dans une application Python.
+## 🎯 Objectif
+Comprendre COMMENT sécuriser des secrets avec Vault et POURQUOI chaque commande est utilisée.
 
-## Objectifs pédagogiques
+---
 
-À l'issue du travail, l'étudiant doit être capable de :
-1. démarrer Vault en environnement local ;
-2. créer un moteur de secrets KV v2 ;
-3. stocker et lire des secrets applicatifs ;
-4. écrire une policy HCL limitant les accès ;
-5. créer un token limité ;
-6. intégrer la lecture d'un secret dans un script Python.
+## ⚠️ IMPORTANT – URLs Codespaces
 
-## Compétences BTS SIO mobilisées
-- **B1.3** – Gérer le patrimoine informatique
-- **B3.2** – Assurer la cybersécurité des services
-- **B3.3** – Sécuriser les échanges et les données
+Dans l’onglet **Ports** :
+- Port 5000 → Application Flask
+- Port 8200 → Vault
 
-## Structure du dépôt
+👉 Toujours utiliser les URLs fournies par Codespaces  
+❌ Ne jamais utiliser 127.0.0.1 dans le navigateur
 
-```text
-vault-bts-sio-slam-template/
-├─ app-python/
-│  ├─ app.py
-│  ├─ requirements.txt
-│  └─ README.md
-├─ docs/
-│  ├─ sujet.md
-│  ├─ corrige-enseignant.md
-│  └─ aide-depannage.md
-├─ policies/
-│  ├─ backend-policy.hcl
-│  └─ readonly-policy.hcl
-├─ scripts/
-│  ├─ start-vault-dev.sh
-│  ├─ init-secrets.sh
-│  └─ create-limited-token.sh
-├─ .github/workflows/
-│  └─ secret-scan.yml
-├─ .gitignore
-└─ README.md
-```
+---
 
-## Pré-requis
+## 🧪 Étape 1 – Vérifier le projet
 
-### Option 1 – Installation locale de Vault
-- Windows / Linux / macOS
-- Vault CLI installé
-- Python 3.10+
+Commande :
+    ls
 
-### Option 2 – GitHub Codespaces
-- ouvrir le dépôt dans Codespaces ;
-- exécuter les scripts fournis dans le terminal.
+👉 Sert à afficher les fichiers présents dans le projet
 
-## Démarrage rapide
+---
 
-### 1. Lancer Vault en mode développement
+## 🧪 Étape 2 – Démarrer les conteneurs
 
-Sous Linux/macOS :
+Commande :
+    docker compose up -d
 
-```bash
-chmod +x scripts/*.sh
-./scripts/start-vault-dev.sh
-```
+👉 Sert à :
+- télécharger les images Docker
+- démarrer Vault et l’environnement Python
 
-Sous Windows PowerShell, lancez l'équivalent manuellement :
+Commande :
+    docker compose ps
 
-```powershell
-$env:VAULT_ADDR='http://127.0.0.1:8200'
-$env:VAULT_TOKEN='root'
-vault server -dev
-```
+👉 Sert à vérifier que les services sont bien démarrés
 
-### 2. Initialiser le coffre et les secrets de démonstration
+---
 
-Dans un second terminal :
+## 🧪 Étape 3 – Initialiser Vault
 
-```bash
-export VAULT_ADDR='http://127.0.0.1:8200'
-export VAULT_TOKEN='root'
-./scripts/init-secrets.sh
-```
+Commande :
+    docker compose exec vault sh /workspace/vault/init.sh
 
-### 3. Créer une policy limitée et un token temporaire
+👉 Sert à :
+- se connecter à Vault
+- activer le stockage de secrets (kv-v2)
+- créer un premier secret (database)
 
-```bash
-./scripts/create-limited-token.sh
-```
+---
 
-### 4. Lancer l'application Python
+## 🧪 Étape 4 – Vérifier le secret
 
-```bash
-cd app-python
-python -m venv .venv
-source .venv/bin/activate  # sous Windows: .venv\Scripts\activate
-pip install -r requirements.txt
-python app.py
-```
+Commande :
+    docker compose exec vault sh -c "export VAULT_ADDR=http://127.0.0.1:8200 && export VAULT_TOKEN=root && vault kv get myapp/database"
 
-## Parcours proposé aux étudiants
+👉 Sert à :
+- récupérer toutes les informations du secret
 
-### Partie A – Diagnostic
-1. Ouvrir `docs/sujet.md`.
-2. Identifier pourquoi les secrets en dur sont dangereux.
-3. Repérer dans `app-python/app.py` comment le code lit un secret depuis Vault.
+Commande :
+    docker compose exec vault sh -c "export VAULT_ADDR=http://127.0.0.1:8200 && export VAULT_TOKEN=root && vault kv get -field=password myapp/database"
 
-### Partie B – Mise en œuvre
-1. Démarrer Vault.
-2. Créer les secrets `myapp/database` et `myapp/api_keys`.
-3. Tester la lecture via CLI.
-4. Appliquer la policy `policies/backend-policy.hcl`.
-5. Générer un token limité 24 h.
-6. Vérifier qu'il ne peut pas lire d'autres chemins.
+👉 Sert à :
+- récupérer uniquement le mot de passe
 
-### Partie C – Analyse de sécurité
-1. Expliquer le principe du moindre privilège.
-2. Expliquer pourquoi le mode dev n'est pas acceptable en production.
-3. Proposer deux améliorations pour une mise en production.
+---
 
-## Livrables attendus
-- captures d'écran des commandes réussies ;
-- fichier de réponses au format Markdown ou PDF ;
-- policy HCL éventuellement modifiée ;
-- démonstration du script Python lisant le secret.
+## 🧪 Étape 5 – Lancer Flask
 
-## Variables et secrets utilisés dans ce template
+Commande :
+    docker compose exec -e VAULT_ADDR=http://vault:8200 -e VAULT_TOKEN=root workspace python app/app.py
 
-Chemins par défaut :
-- `myapp/database`
-- `myapp/api_keys`
-- `myapp/dev`
+👉 Sert à :
+- lancer l’application Flask
+- connecter l’application à Vault
 
-Clés courantes :
-- `username`
-- `password`
-- `token`
-- `url`
+---
 
-## Sécurité et bonnes pratiques rappelées
-- ne jamais committer un vrai secret ;
-- ne jamais conserver `VAULT_TOKEN=root` dans un fichier ;
-- ne pas utiliser le mode dev en production ;
-- préférer des tokens à TTL court ;
-- documenter les droits réellement nécessaires.
+## 🧪 Étape 6 – Tester l’application
+
+Dans le navigateur (via Ports) :
+
+- /insecure → montre un mot de passe en clair ❌
+- /secure → utilise Vault ✔
+
+---
+
+## 🧪 Étape 7 – Appliquer une policy
+
+Commande :
+    docker compose exec vault sh -c "export VAULT_ADDR=http://127.0.0.1:8200 && export VAULT_TOKEN=root && vault policy write backend-policy /workspace/policies/backend-policy.hcl"
+
+👉 Sert à :
+- définir les droits d’accès (lecture seule)
+
+Commande :
+    docker compose exec vault sh -c "export VAULT_ADDR=http://127.0.0.1:8200 && export VAULT_TOKEN=root && vault policy read backend-policy"
+
+👉 Sert à vérifier la policy
+
+---
+
+## 🧪 Étape 8 – Créer un token sécurisé
+
+Commande :
+    docker compose exec vault sh -c "export VAULT_ADDR=http://127.0.0.1:8200 && export VAULT_TOKEN=root && vault token create -policy=backend-policy -ttl=24h"
+
+👉 Sert à :
+- créer un accès limité
+- appliquer le principe du moindre privilège
+
+---
+
+## 🧪 Étape 9 – Identifier la faille
+
+Commande :
+    cat app/app.py
+
+👉 Sert à lire le code et repérer :
+- le mot de passe en dur
+- la route insecure
+
+---
+
+## 🧪 Étape 10 – Corriger le code
+
+Action :
+- supprimer DB_PASSWORD
+- ne plus afficher de secret
+
+---
+
+## 🎯 Résultat attendu
+
+- Vault fonctionne
+- Flask fonctionne
+- /secure utilise Vault
+- /insecure corrigé
+- policy appliquée
+- token sécurisé créé
+
+---
+
+## 🧠 À retenir
+
+- un secret ne doit jamais être dans le code
+- Vault protège les secrets
+- une policy limite les accès
+- Codespaces utilise des URLs dynamiques
