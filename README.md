@@ -150,9 +150,3 @@ Clés courantes :
 - ne pas utiliser le mode dev en production ;
 - préférer des tokens à TTL court ;
 - documenter les droits réellement nécessaires.
-
-## Pour transformer ce dépôt en template GitHub
-1. créer un nouveau dépôt GitHub ;
-2. téléverser le contenu de ce dossier ;
-3. dans **Settings > General > Template repository**, cocher l'option ;
-4. réutiliser le modèle dans GitHub Classroom.
